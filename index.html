@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeuroLearn – Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- Firebase SDKs (compat for easy use without bundler) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161921;
+    --surface2: #1e2330;
+    --border: #2a2f3e;
+    --text: #e8eaf2;
+    --muted: #8890a8;
+    --accent-teal: #3ddbd9;
+    --accent-violet: #9b6dff;
+    --accent-amber: #ffb347;
+    --accent-rose: #ff6b8a;
+    --accent-green: #5dde86;
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Background blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.12;
+    pointer-events: none;
+  }
+  .blob1 { width: 500px; height: 500px; background: var(--accent-teal); top: -150px; left: -150px; }
+  .blob2 { width: 400px; height: 400px; background: var(--accent-violet); bottom: -100px; right: -100px; }
+  .blob3 { width: 300px; height: 300px; background: var(--accent-amber); top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+  .auth-container {
+    width: 100%;
+    max-width: 440px;
+    padding: 20px;
+    z-index: 1;
+  }
+
+  .logo-wrap {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .logo-mark {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, var(--accent-teal), var(--accent-violet));
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: white;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 32px rgba(61,219,217,0.25);
+  }
+  .logo-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    display: block;
+  }
+  .logo-tagline {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px;
+    animation: fadeUp 0.5s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Tabs */
+  .auth-tabs {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+  .auth-tab {
+    flex: 1;
+    padding: 10px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .auth-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* Form */
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .form-input:focus {
+    border-color: var(--accent-teal);
+    box-shadow: 0 0 0 3px rgba(61,219,217,0.1);
+  }
+  .form-input::placeholder { color: var(--muted); }
+
+  /* Profile selection for signup */
+  .profile-select { display: none; }
+  .profile-select.visible { display: block; }
+  .profile-select .label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .profile-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .profile-opt {
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .profile-opt:hover { border-color: var(--accent-teal); }
+  .profile-opt.selected {
+    border-color: var(--accent-teal);
+    background: rgba(61,219,217,0.08);
+    color: var(--accent-teal);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent-teal), #5de8e6);
+    color: #0d0f14;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(61,219,217,0.3); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .divider {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin: 16px 0;
+    position: relative;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: var(--border);
+  }
+  .divider::before { left: 0; }
+  .divider::after { right: 0; }
+
+  .btn-google {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .btn-google:hover { border-color: var(--accent-violet); background: rgba(155,109,255,0.05); }
+
+  .error-msg {
+    background: rgba(255,107,138,0.1);
+    border: 1px solid rgba(255,107,138,0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--accent-rose);
+    margin-bottom: 16px;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  .success-msg {
+    background: rgba(93,222,134,0.1);
+    border: 1px solid rgba(93,222,134,0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--accent-green);
+    margin-bottom: 16px;
+    display: none;
+  }
+  .success-msg.visible { display: block; }
+
+  .spinner {
+    display: none;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #0d0f14;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin: 0 auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .bottom-note {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .bottom-note a {
+    color: var(--accent-teal);
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+
+<div class="auth-container">
+  <div class="logo-wrap">
+    <div class="logo-mark">NL</div>
+    <span class="logo-name">NeuroLearn</span>
+    <p class="logo-tagline">Your brain is unique. Learn your way.</p>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+    </div>
+
+    <div class="error-msg" id="error-msg"></div>
+    <div class="success-msg" id="success-msg"></div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="login-email" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="login-password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn-primary" id="login-btn">
+        <span id="login-text">Sign In</span>
+        <div class="spinner" id="login-spinner"></div>
+      </button>
+    </form>
+
+    <!-- SIGNUP FORM -->
+    <form id="signup-form" style="display:none" onsubmit="handleSignup(event)">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-input" id="signup-name" placeholder="Aarav Sharma" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="signup-email" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="signup-password" placeholder="Min. 6 characters" required>
+      </div>
+
+      <!-- Neurodivergent profile selection -->
+      <div class="form-group profile-select visible">
+        <div class="label">Select your learning profile(s) <span style="color:var(--muted)">(optional)</span></div>
+        <div class="profile-options">
+          <div class="profile-opt" data-profile="adhd" onclick="toggleProfile(this)">⚡ ADHD</div>
+          <div class="profile-opt" data-profile="dyslexia" onclick="toggleProfile(this)">🔤 Dyslexia</div>
+          <div class="profile-opt" data-profile="autism" onclick="toggleProfile(this)">🌿 Autism</div>
+          <div class="profile-opt" data-profile="dyscalculia" onclick="toggleProfile(this)">🔢 Dyscalculia</div>
+          <div class="profile-opt" data-profile="anxiety" onclick="toggleProfile(this)">😌 Anxiety</div>
+          <div class="profile-opt" data-profile="other" onclick="toggleProfile(this)">✨ Other</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" id="signup-btn">
+        <span id="signup-text">Create Account</span>
+        <div class="spinner" id="signup-spinner"></div>
+      </button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <button class="btn-google" onclick="handleGoogleAuth()">
+      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+
+    <p class="bottom-note">By continuing, you agree to our <a href="#">Terms</a> & <a href="#">Privacy Policy</a></p>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBQhvqnZEbBBYGRJeqvrMVJK_pmwCZrEYU",
+  authDomain: "enable-auth-f3007.firebaseapp.com",
+  projectId: "enable-auth-f3007",
+  storageBucket: "enable-auth-f3007.firebasestorage.app",
+  messagingSenderId: "161451664574",
+  appId: "1:161451664574:web:5e5e6db71b37421b676aef",
+  measurementId: "G-ZF4D3VNDHF"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ── Flag: are we in the middle of signing up/in? ──
+// This prevents onAuthStateChanged from redirecting mid-flow
+let isAuthenticating = false;
+
+// ── Only redirect if user is ALREADY logged in on page load ──
+let authChecked = false;
+auth.onAuthStateChanged(user => {
+  if (!authChecked) {
+    authChecked = true;
+    // Only auto-redirect on initial page load, not during active sign-up
+    if (user && !isAuthenticating) {
+      window.location.href = 'dashboard.html';
+    }
+  }
+});
+
+// ── Tab switching ──
+let currentTab = 'login';
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  clearMessages();
+}
+
+// ── Profile toggles ──
+let selectedProfiles = [];
+function toggleProfile(el) {
+  const p = el.dataset.profile;
+  el.classList.toggle('selected');
+  if (selectedProfiles.includes(p)) {
+    selectedProfiles = selectedProfiles.filter(x => x !== p);
+  } else {
+    selectedProfiles.push(p);
+  }
+}
+
+// ── Messages ──
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = '⚠️ ' + msg;
+  el.classList.add('visible');
+  document.getElementById('success-msg').classList.remove('visible');
+}
+function showSuccess(msg) {
+  const el = document.getElementById('success-msg');
+  el.textContent = '✅ ' + msg;
+  el.classList.add('visible');
+  document.getElementById('error-msg').classList.remove('visible');
+}
+function clearMessages() {
+  document.getElementById('error-msg').classList.remove('visible');
+  document.getElementById('success-msg').classList.remove('visible');
+}
+
+function setLoading(form, loading) {
+  const btn = document.getElementById(`${form}-btn`);
+  const text = document.getElementById(`${form}-text`);
+  const spinner = document.getElementById(`${form}-spinner`);
+  if (!btn || !text || !spinner) return;
+  btn.disabled = loading;
+  text.style.display = loading ? 'none' : 'inline';
+  spinner.style.display = loading ? 'block' : 'none';
+}
+
+// ── Create user document in Firestore ──
+async function createUserDoc(user, extras = {}) {
+  try {
+    const userRef = db.collection('users').doc(user.uid);
+    const snap = await userRef.get();
+    if (!snap.exists) {
+      await userRef.set({
+        uid: user.uid,
+        name: extras.name || user.displayName || 'Learner',
+        email: user.email,
+        profiles: extras.profiles || [],
+        streak: 0,
+        bestStreak: 0,
+        lastActive: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        totalFocusMinutes: 0,
+        settings: {
+          dyslexiaFont: false,
+          colorOverlay: false,
+          reduceMotion: false,
+          textToSpeech: false,
+          lowContrast: false,
+          calmMode: true
+        },
+        progress: {},
+        mood: null,
+        focusMode: 'balanced'
+      });
+    }
+  } catch (err) {
+    // Firestore write failed (rules/network) - still redirect, dashboard handles it
+    console.warn('Firestore doc creation failed:', err.message);
+  }
+}
+
+// ── LOGIN ──
+async function handleLogin(e) {
+  e.preventDefault();
+  clearMessages();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  if (!email || !password) {
+    showError('Please fill in all fields.');
+    return;
+  }
+
+  isAuthenticating = true;
+  setLoading('login', true);
+
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    showSuccess('Signed in! Redirecting…');
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+  } catch (err) {
+    isAuthenticating = false;
+    setLoading('login', false);
+    showError(friendlyError(err.code));
+    console.error('Login error:', err.code, err.message);
+  }
+}
+
+// ── SIGNUP ──
+async function handleSignup(e) {
+  e.preventDefault();
+  clearMessages();
+
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+
+  if (!name || !email || !password) {
+    showError('Please fill in all fields.');
+    return;
+  }
+  if (password.length < 6) {
+    showError('Password must be at least 6 characters.');
+    return;
+  }
+
+  isAuthenticating = true;
+  setLoading('signup', true);
+
+  try {
+    // Step 1: Create the auth account
+    const { user } = await auth.createUserWithEmailAndPassword(email, password);
+
+    // Step 2: Set display name
+    await user.updateProfile({ displayName: name });
+
+    // Step 3: Save user data to Firestore (non-blocking if it fails)
+    await createUserDoc(user, { name, profiles: selectedProfiles });
+
+    // Step 4: Redirect
+    showSuccess('Account created! Redirecting…');
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+
+  } catch (err) {
+    isAuthenticating = false;
+    setLoading('signup', false);
+    showError(friendlyError(err.code));
+    console.error('Signup error:', err.code, err.message);
+  }
+}
+
+// ── GOOGLE AUTH ──
+async function handleGoogleAuth() {
+  clearMessages();
+  isAuthenticating = true;
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const { user } = await auth.signInWithPopup(provider);
+    await createUserDoc(user, { name: user.displayName });
+    showSuccess('Signed in with Google! Redirecting…');
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+  } catch (err) {
+    isAuthenticating = false;
+    if (err.code !== 'auth/popup-closed-by-user') {
+      showError(friendlyError(err.code));
+    }
+    console.error('Google auth error:', err.code, err.message);
+  }
+}
+
+// ── Friendly errors ──
+function friendlyError(code) {
+  const map = {
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/wrong-password': 'Incorrect password. Please try again.',
+    'auth/invalid-credential': 'Incorrect email or password.',
+    'auth/email-already-in-use': 'An account with this email already exists. Try signing in.',
+    'auth/invalid-email': 'Please enter a valid email address.',
+    'auth/weak-password': 'Password too weak. Use at least 6 characters.',
+    'auth/too-many-requests': 'Too many attempts. Please wait a moment.',
+    'auth/popup-closed-by-user': 'Sign-in popup was closed.',
+    'auth/network-request-failed': 'Network error. Check your connection.',
+    'auth/operation-not-allowed': 'This sign-in method is not enabled in Firebase.',
+  };
+  return map[code] || `Error: ${code}. Please try again.`;
+}
+</script>
+</body>
+</html>
