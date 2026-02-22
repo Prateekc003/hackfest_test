@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NeuroLearn – Sign In</title>
+<title>NeuroAdapt – Sign In</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <!-- Firebase SDKs (compat for easy use without bundler) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -300,8 +300,8 @@
 
 <div class="auth-container">
   <div class="logo-wrap">
-    <div class="logo-mark">NL</div>
-    <span class="logo-name">NeuroLearn</span>
+    <div class="logo-mark">NA</div>
+    <span class="logo-name">NeuroAdapt</span>
     <p class="logo-tagline">Your brain is unique. Learn your way.</p>
   </div>
 
@@ -401,7 +401,7 @@ auth.onAuthStateChanged(user => {
     authChecked = true;
     // Only auto-redirect on initial page load, not during active sign-up
     if (user && !isAuthenticating) {
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard.html';
     }
   }
 });
@@ -510,7 +510,7 @@ async function handleLogin(e) {
   try {
     await auth.signInWithEmailAndPassword(email, password);
     showSuccess('Signed in! Redirecting…');
-    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+    setTimeout(() => { window.location.href = '/dashboard.html'; }, 800);
   } catch (err) {
     isAuthenticating = false;
     setLoading('login', false);
@@ -552,7 +552,7 @@ async function handleSignup(e) {
 
     // Step 4: Redirect
     showSuccess('Account created! Redirecting…');
-    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+    setTimeout(() => { window.location.href = '/dashboard.html'; }, 800);
 
   } catch (err) {
     isAuthenticating = false;
@@ -571,7 +571,7 @@ async function handleGoogleAuth() {
     const { user } = await auth.signInWithPopup(provider);
     await createUserDoc(user, { name: user.displayName });
     showSuccess('Signed in with Google! Redirecting…');
-    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+    setTimeout(() => { window.location.href = '/dashboard.html'; }, 800);
   } catch (err) {
     isAuthenticating = false;
     if (err.code !== 'auth/popup-closed-by-user') {

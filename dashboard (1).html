@@ -974,7 +974,7 @@ auth.onAuthStateChanged(async user => {
   _authInitialized = true;
 
   if (!user) {
-    window.location.href = '/index.html';
+    window.location.href = '/';
     return;
   }
   currentUser = user;
@@ -1592,7 +1592,7 @@ function getTimeOfDay() {
 }
 
 function signOut() {
-  auth.signOut().then(() => window.location.href = '/index.html');
+  auth.signOut().then(() => window.location.href = '/');
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
