@@ -2066,6 +2066,22 @@ function speakChunk() {
   showToast('🔊 Reading your micro-lesson…', 'success');
 }
 
+function launchToola(toolName) {
+
+    if (toolName === "mindmap") {
+
+        // open your LOCAL Flask Mindmap Generator
+        const mindmapURL = "http://127.0.0.1:5000";
+
+        // check if Flask server is reachable
+        const newTab = window.open(mindmapURL, "_blank");
+
+        if (!newTab) {
+            alert("⚠️ Please allow popups or start the Mindmap server.");
+        }
+    }
+}
+
 // Start cognitive monitoring when dashboard loads
 function initCognitiveMonitoring() {
   // Small delay to let dashboard render first
@@ -2149,7 +2165,7 @@ function initCognitiveMonitoring() {
         <div style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;margin-bottom:4px">Text to Speech</div>
         <div style="font-size:11px;color:var(--muted)">Listen to any content aloud</div>
       </div>
-      <div class="tool-card" onclick="launchTool('mindmap')">
+      <div class="tool-card" onclick="launchToola('mindmap')">
         <div style="font-size:28px;margin-bottom:8px">🗺️</div>
         <div style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;margin-bottom:4px">Mind Map</div>
         <div style="font-size:11px;color:var(--muted)">Visual thinking & brainstorming</div>
