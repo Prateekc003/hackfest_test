@@ -1005,7 +1005,25 @@
 
   </aside>
 </div><!-- /main -->
+<!-- FLOATING AI BUTTON -->
+<div id="ai-float-btn">🤖</div>
 
+<!-- FLOATING AI CHAT BOX -->
+<div id="ai-chat-box">
+  <div id="ai-header">
+    NeuroAdapt AI
+    <button id="ai-close">✕</button>
+  </div>
+
+  <div id="ai-messages">
+    <p>Hello! AI assistant ready.</p>
+  </div>
+
+  <div id="ai-input-area">
+    <input id="ai-input" placeholder="Ask something..." />
+    <button id="ai-send">Send</button>
+  </div>
+</div>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBQhvqnZEbBBYGRJeqvrMVJK_pmwCZrEYU",
@@ -2164,7 +2182,17 @@ function initCognitiveMonitoring() {
     updateDNAInsights();
   }, 2000);
 }
+const aiBtn = document.getElementById("ai-float-btn");
+const aiBox = document.getElementById("ai-chat-box");
+const aiClose = document.getElementById("ai-close");
 
+aiBtn.onclick = () => {
+  aiBox.style.display = "flex";
+};
+
+aiClose.onclick = () => {
+  aiBox.style.display = "none";
+};
 </script>
 
 <!-- PROFILE MODAL -->
@@ -2338,34 +2366,7 @@ function initCognitiveMonitoring() {
 <!-- FLOATING AI BUTTON -->
 <div id="ai-float-btn">🤖</div>
 
-<!-- FLOATING AI CHAT BOX -->
-<div id="ai-chat-box">
-  <div id="ai-header">
-    NeuroAdapt AI
-    <button id="ai-close">✕</button>
-  </div>
 
-  <div id="ai-messages">
-    <p>Hello! AI assistant ready.</p>
-  </div>
 
-  <div id="ai-input-area">
-    <input id="ai-input" placeholder="Ask something..." />
-    <button id="ai-send">Send</button>
-  </div>
-</div>
-  <script>
-const aiBtn = document.getElementById("ai-float-btn");
-const aiBox = document.getElementById("ai-chat-box");
-const aiClose = document.getElementById("ai-close");
-
-aiBtn.onclick = () => {
-  aiBox.style.display = "flex";
-};
-
-aiClose.onclick = () => {
-  aiBox.style.display = "none";
-};
-  </script>
 </body>
 </html>
